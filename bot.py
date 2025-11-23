@@ -12,9 +12,6 @@ from utils.hf_api import question_answering, sentence_similarity, translate_text
 # Загружаем переменные из .env (укажи свой путь)
 load_dotenv(dotenv_path=r"C:\ml 1 sem\chatbot_telegram\.env")
 
-# Проверяем, что токен читается
-print("TELEGRAM_TOKEN =", os.getenv("TELEGRAM_TOKEN"))
-print("HF_TOKEN =", os.getenv("HF_TOKEN"))
 
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
