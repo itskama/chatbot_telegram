@@ -10,9 +10,9 @@ from dotenv import load_dotenv
 from utils.hf_api import question_answering, sentence_similarity, translate_text, generate_text
 
 # ======================
-# ENV
+# Загрузка ENV
 # ======================
-load_dotenv()  # Render использует Environment Variables
+load_dotenv()  # Render или локально берёт TELEGRAM_TOKEN и HF_TOKEN из .env
 
 logging.basicConfig(level=logging.INFO)
 
@@ -21,6 +21,18 @@ bot = Bot(
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
 dp = Dispatcher()
+
+# ======================
+# Вспомогательная функция для получения текста после команды
+# ======================
+def extract_args(message: types.Message, command: str) -> str:
+    """
+    Возвращает текст после команды.
+    Например: "/generate Hello AI" -> "Hello AI"
+    """
+    if message.text.startswith(f"/{command}"):
+        return message.text[len(f"/{command}"):].strip()
+    return ""
 
 # ======================
 # /start
@@ -36,11 +48,13 @@ async def start_cmd(message: types.Message):
         "/generate <prompt> — Text Generation"
     )
 
-
+# ======================
+# /ask — Question Answering
+# ======================
 @dp.message(Command("ask"))
 async def ask_cmd(message: types.Message):
     try:
-        text = message.get_args()
+        text = extract_args(message, "ask")
         if "||" not in text:
             await message.answer("Format: /ask context || question")
             return
@@ -50,11 +64,13 @@ async def ask_cmd(message: types.Message):
     except Exception as e:
         await message.answer(f"❌ Error: {e}")
 
-
+# ======================
+# /similarity — Sentence Similarity
+# ======================
 @dp.message(Command("similarity"))
 async def sim_cmd(message: types.Message):
     try:
-        text = message.get_args()
+        text = extract_args(message, "similarity")
         if "||" not in text:
             await message.answer("Format: /similarity sentence1 || sentence2")
             return
@@ -64,11 +80,13 @@ async def sim_cmd(message: types.Message):
     except Exception as e:
         await message.answer(f"❌ Error: {e}")
 
-
+# ======================
+# /translate — Translation
+# ======================
 @dp.message(Command("translate"))
 async def translate_cmd(message: types.Message):
     try:
-        text = message.get_args()
+        text = extract_args(message, "translate")
         if not text:
             await message.answer("Send text to translate. Example: /translate Hello world")
             return
@@ -77,11 +95,13 @@ async def translate_cmd(message: types.Message):
     except Exception as e:
         await message.answer(f"❌ Error: {e}")
 
-
+# ======================
+# /generate — Text Generation
+# ======================
 @dp.message(Command("generate"))
 async def generate_cmd(message: types.Message):
     try:
-        prompt = message.get_args()
+        prompt = extract_args(message, "generate")
         if not prompt:
             await message.answer("Send a prompt to generate text. Example: /generate Hello AI")
             return
@@ -90,7 +110,9 @@ async def generate_cmd(message: types.Message):
     except Exception as e:
         await message.answer(f"❌ Error: {e}")
 
-
+# ======================
+# MAIN
+# ======================
 async def main():
     print("Starting polling...")
     await dp.start_polling(bot)
