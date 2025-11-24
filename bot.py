@@ -9,25 +9,25 @@ from dotenv import load_dotenv
 
 from utils.hf_api import question_answering, sentence_similarity, translate_text, generate_text
 
-# Загружаем переменные из .env (укажи свой путь)
-load_dotenv(dotenv_path=r"C:\ml 1 sem\chatbot_telegram\.env")
+
+# ======================
+# ENV
+# ======================
+load_dotenv()   # Render сам подставляет TELEGRAM_TOKEN + HF_TOKEN
 
 
 logging.basicConfig(level=logging.INFO)
-load_dotenv()
-
-
-
 
 bot = Bot(
     token=os.getenv("TELEGRAM_TOKEN"),
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
-
 dp = Dispatcher()
 
 
+# ======================
 # /start
+# ======================
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
     await message.answer(
@@ -40,7 +40,9 @@ async def start_cmd(message: types.Message):
     )
 
 
+# ======================
 # /ask
+# ======================
 @dp.message(Command("ask"))
 async def ask_cmd(message: types.Message):
     await message.answer(
@@ -49,7 +51,6 @@ async def ask_cmd(message: types.Message):
     )
 
 
-# QA processing
 @dp.message(F.text.startswith("Context:"))
 async def handle_qa(message: types.Message):
     try:
@@ -63,13 +64,14 @@ async def handle_qa(message: types.Message):
         await message.answer(f"❌ Error: {e}")
 
 
+# ======================
 # /similarity
+# ======================
 @dp.message(Command("similarity"))
 async def sim_cmd(message: types.Message):
     await message.answer("✍️ Send two sentences separated by a line break.")
 
 
-# similarity
 @dp.message(F.text.contains("\n"))
 async def handle_similarity(message: types.Message):
     try:
@@ -77,16 +79,47 @@ async def handle_similarity(message: types.Message):
         score = sentence_similarity(s1.strip(), s2.strip())
         await message.answer(f"🔍 Similarity score: {score:.3f}")
     except Exception:
-        pass    # чтобы не ловить QA сообщения
+        pass
 
 
+# ======================
 # /translate
+# ======================
 @dp.message(Command("translate"))
 async def translate_cmd(message: types.Message):
-    await message.answer("🌐 Send text in English to translate into Russian.")
+    await message.answer("🌐 Send English text to translate into Russian.")
 
+
+# ======================
+# /generate
+# ======================
+@dp.message(Command("generate"))
+async def generate_cmd(message: types.Message):
+    await message.answer("🧠 Send a prompt to generate text.")
+
+
+# ======================
+# Debug — всё остальное
+# ======================
 @dp.message()
 async def debug_all(message: types.Message):
-    print("Пришло сообщение:", message.text)
-    await message.answer(f"Вы написали: {message.text}")
+    print("Incoming message:", message.text)
+    await message.answer(f"You said: {message.text}")
 
+
+# ======================
+# MAIN
+# ======================
+async def main():
+    print("Starting polling...")
+    await dp.start_polling(bot)
+
+
+if __name__ == "__main__":
+    try:
+        print("Bot starting...")
+        asyncio.run(main())
+    except Exception as e:
+        print("FATAL ERROR:", e)
+        import traceback
+        traceback.print_exc()
